@@ -3,133 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volcano Dash - Manager Mode</title>
+    <title>Manager Mode: Tic-Tac-Toe</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: monospace; user-select: none; }
-        canvas { display: block; }
-        
-        #ui {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
+        :root {
+            --bg-dark: #121212;
+            --card-dark: #1e1e1e;
+            --neon-green: #84c225;
+            --neon-red: #ff4500;
+            --neon-blue: #00f3ff;
+            --text-light: #e0e0e0;
         }
-        .score {
-            position: absolute; top: 20px; right: 20px;
-            color: #ffd700; font-size: 24px; font-weight: bold;
-            text-shadow: 0 0 10px #ff4500;
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', monospace, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none;
         }
+
+        /* --- UI ELEMENTS --- */
         .back-btn {
-            position: absolute; top: 20px; left: 20px;
-            color: white; background: #333; padding: 10px 20px;
-            text-decoration: none; border-radius: 5px; font-weight: bold;
-            pointer-events: auto; border: 1px solid #555;
+            position: absolute;
+            top: 20px; left: 20px;
+            color: var(--neon-green);
+            background: transparent;
+            padding: 10px 20px;
+            text-decoration: none;
+            border: 2px solid var(--neon-green);
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+            transition: 0.3s;
         }
-        .game-over {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); padding: 40px; border-radius: 15px;
-            text-align: center; border: 2px solid #ff4500; display: none;
-            pointer-events: auto;
+        .back-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-green);
         }
-        h1 { color: #ff4500; margin: 0 0 10px 0; }
-        p { color: white; margin-bottom: 20px; }
-        button {
-            background: #ffd700; border: none; padding: 10px 20px;
-            font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px;
+
+        h1 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.1);
         }
-        button:hover { background: white; }
+
+        /* --- SCOREBOARD --- */
+        .scoreboard {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 30px;
+            background: var(--card-dark);
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .player-score {
+            text-align: center;
+            position: relative;
+        }
+
+        .player-score h3 { margin: 0; font-size: 14px; opacity: 0.7; }
+        .player-score span { font-size: 24px; font-weight: bold; display: block; margin-top: 5px;}
+        
+        .turn-indicator {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .active-x .turn-indicator { background: var(--neon-green); }
+        .active-o .turn-indicator { background: var(--neon-red); }
+
+        /* --- GAME GRID --- */
+        .game-container {
+            position: relative;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+        }
+
+        .cell {
+            background: var(--card-dark);
+            border: 2px solid #333;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .cell:hover {
+            border-color: #555;
+            background: #252525;
+        }
+
+        .cell.x { color: var(--neon-green); text-shadow: 0 0 15px var(--neon-green); }
+        .cell.o { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
+
+        /* --- STATUS & RESET --- */
+        .status-msg {
+            margin-top: 25px;
+            font-size: 18px;
+            height: 24px; /* Fixed height to prevent jumping */
+            color: var(--neon-blue);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .reset-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+
+        .reset-btn:hover { background: #555; transform: scale(1.05); }
+
+        /* --- WINNING LINE ANIMATION --- */
+        .cell.win {
+            background: #fff;
+            color: #000 !important;
+            text-shadow: none !important;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
     </style>
 </head>
 <body>
 
-    <a href="index.html" class="back-btn">← Back to QR</a>
-    <div id="ui">
-        <div class="score">SCORE: <span id="scoreVal">0</span></div>
-        <div class="game-over" id="gameOverScreen">
-            <h1>FIRED! 🔥</h1>
-            <p>Score: <span id="finalScore">0</span></p>
-            <button onclick="location.reload()">Try Again</button>
+    <a href="index.html" class="back-btn">← Back</a>
+
+    <h1>Manager Mode</h1>
+
+    <div class="scoreboard">
+        <div class="player-score active-x" id="p1-box">
+            <h3 style="color: var(--neon-green);">PLAYER X</h3>
+            <span id="scoreX">0</span>
+            <div class="turn-indicator"></div>
+        </div>
+        <div class="player-score" id="p2-box">
+            <h3 style="color: var(--neon-red);">PLAYER O</h3>
+            <span id="scoreO">0</span>
+            <div class="turn-indicator"></div>
         </div>
     </div>
-    <canvas id="gameCanvas"></canvas>
+
+    <div class="game-container">
+        <div class="grid" id="grid">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+    </div>
+
+    <div class="status-msg" id="statusMsg">X's Turn</div>
+
+    <button class="reset-btn" onclick="resetGame()">Restart Game</button>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        
-        // Setup Canvas
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Game State
-        let score = 0;
-        let gameOver = false;
-        let player = { x: canvas.width/2, y: canvas.height - 80, emoji: "🛒" };
-        let obstacles = []; // Fire
-        let rewards = [];   // Coins
+        // --- GAME STATE ---
+        const statusDisplay = document.getElementById('statusMsg');
+        const cells = document.querySelectorAll('.cell');
+        const p1Box = document.getElementById('p1-box');
+        const p2Box = document.getElementById('p2-box');
+        const scoreXEl = document.getElementById('scoreX');
+        const scoreOEl = document.getElementById('scoreO');
 
-        // Audio
+        let gameActive = true;
+        let currentPlayer = "X";
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let scores = { X: 0, O: 0 };
+
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Cols
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        // --- AUDIO SYSTEM ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(f, t, d) {
+        function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            o.type = t; o.frequency.value = f;
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-            o.connect(g); g.connect(audioCtx.destination);
-            o.start(); o.stop(audioCtx.currentTime + d);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            } else if (type === 'win') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                osc.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            }
+
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (type==='win'?0.5:0.1));
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + (type==='win'?0.5:0.1));
         }
 
-        // Inputs
-        window.addEventListener("mousemove", e => player.x = e.clientX);
-        window.addEventListener("touchmove", e => player.x = e.touches[0].clientX);
+        // --- GAME LOGIC ---
+        function handleCellClick(e) {
+            const clickedCell = e.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
 
-        // Game Loop
-        function loop() {
-            if (gameOver) return;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw Player
-            ctx.font = "40px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(player.emoji, player.x, player.y);
-            
-            // Spawners
-            if (Math.random() < 0.05) obstacles.push({x: Math.random()*canvas.width, y: -50, s: Math.random()*5+5});
-            if (Math.random() < 0.02) rewards.push({x: Math.random()*canvas.width, y: -50, s: Math.random()*3+2});
+            if (gameState[clickedCellIndex] !== "" || !gameActive) {
+                return;
+            }
 
-            // Logic
-            obstacles.forEach((o, i) => {
-                o.y += o.s;
-                ctx.fillText("🔥", o.x, o.y);
-                if (Math.hypot(player.x - o.x, player.y - 20 - o.y) < 30) endGame();
-                if (o.y > canvas.height) obstacles.splice(i, 1);
-            });
+            handleCellPlayed(clickedCell, clickedCellIndex);
+            handleResultValidation();
+        }
 
-            rewards.forEach((r, i) => {
-                r.y += r.s;
-                ctx.fillText("🪙", r.x, r.y);
-                if (Math.hypot(player.x - r.x, player.y - 20 - r.y) < 35) {
-                    score += 10;
-                    document.getElementById("scoreVal").innerText = score;
-                    playTone(1200, 'sine', 0.1);
-                    rewards.splice(i, 1);
+        function handleCellPlayed(clickedCell, clickedCellIndex) {
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.innerText = currentPlayer;
+            clickedCell.classList.add(currentPlayer.toLowerCase());
+            playSound('click');
+        }
+
+        function handleResultValidation() {
+            let roundWon = false;
+            let winningLine = [];
+
+            for (let i = 0; i <= 7; i++) {
+                const winCondition = winningConditions[i];
+                let a = gameState[winCondition[0]];
+                let b = gameState[winCondition[1]];
+                let c = gameState[winCondition[2]];
+
+                if (a === '' || b === '' || c === '') {
+                    continue;
                 }
-                if (r.y > canvas.height) rewards.splice(i, 1);
+                if (a === b && b === c) {
+                    roundWon = true;
+                    winningLine = winCondition;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusDisplay.innerText = `Winning! Player ${currentPlayer} has won!`;
+                statusDisplay.style.color = currentPlayer === "X" ? "var(--neon-green)" : "var(--neon-red)";
+                gameActive = false;
+                updateScore(currentPlayer);
+                highlightWin(winningLine);
+                playSound('win');
+                return;
+            }
+
+            let roundDraw = !gameState.includes("");
+            if (roundDraw) {
+                statusDisplay.innerText = "Game Ended in a Draw!";
+                statusDisplay.style.color = "var(--text-light)";
+                gameActive = false;
+                return;
+            }
+
+            handlePlayerChange();
+        }
+
+        function handlePlayerChange() {
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            statusDisplay.innerText = `${currentPlayer}'s Turn`;
+            statusDisplay.style.color = "var(--neon-blue)";
+            
+            // Toggle Visual Indicator
+            if(currentPlayer === "X") {
+                p1Box.classList.add('active-x');
+                p2Box.classList.remove('active-o');
+            } else {
+                p1Box.classList.remove('active-x');
+                p2Box.classList.add('active-o');
+            }
+        }
+
+        function updateScore(winner) {
+            scores[winner]++;
+            scoreXEl.innerText = scores.X;
+            scoreOEl.innerText = scores.O;
+        }
+
+        function highlightWin(indices) {
+            indices.forEach(index => {
+                cells[index].classList.add('win');
             });
-
-            requestAnimationFrame(loop);
         }
 
-        function endGame() {
-            gameOver = true;
-            playTone(150, 'sawtooth', 0.5);
-            document.getElementById("finalScore").innerText = score;
-            document.getElementById("gameOverScreen").style.display = "block";
+        function resetGame() {
+            gameActive = true;
+            currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            statusDisplay.innerText = "X's Turn";
+            statusDisplay.style.color = "var(--neon-blue)";
+            
+            p1Box.classList.add('active-x');
+            p2Box.classList.remove('active-o');
+
+            cells.forEach(cell => {
+                cell.innerText = "";
+                cell.classList.remove('x', 'o', 'win');
+            });
         }
 
-        // Start
-        loop();
+        // Add Event Listeners
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+
     </script>
 </body>
 </html>
