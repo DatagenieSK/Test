@@ -5,344 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BB QR Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-   
     <style>
-        /* --- VARIABLES & RESET --- */
+        /* --- VARIABLES --- */
         :root {
             --bb-green: #84c225;
-            --bb-green-glow: rgba(132, 194, 37, 0.4);
             --bg-dark: #121212;
             --card-dark: #1e1e1e;
             --text-light: #e0e0e0;
             --input-bg: #2c2c2c;
-            --btn-bg: #333;
-            
-            /* Royal/Boss Mode Vars */
             --gold: #ffd700;
-            --gold-glow: rgba(255, 215, 0, 0.5);
             --fire-red: #ff4500;
-            --fire-orange: #ff8c00;
         }
-
         * { box-sizing: border-box; }
-
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            position: relative;
-            padding: 20px;
-            transition: background 0.5s;
-            overflow: hidden; /* Prevent scrollbars from particles */
-        }
-
-        /* --- BACKGROUND LAYERS --- */
-        .emoji-bg {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.15;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 20px;
             overflow: hidden;
-            transition: opacity 0.5s;
         }
 
-        /* Fire Canvas Layer */
-        #fireCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1; /* Above emoji, below card */
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 1s ease-in;
-        }
-       
-        .floating-emoji {
-            position: absolute;
-            font-size: 3rem;
-            animation: float 10s infinite ease-in-out;
-            transition: all 0.5s;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(10deg); }
-            100% { transform: translateY(0) rotate(0deg); }
-        }
-
-        /* --- MAIN CARD --- */
+        /* --- CARD STYLES --- */
         .card {
             background: var(--card-dark);
-            width: 100%;
-            max-width: 400px;
-            border-radius: 16px;
-            overflow: hidden;
+            width: 100%; max-width: 400px;
+            border-radius: 16px; overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            text-align: center;
-            position: relative;
-            z-index: 10;
-            border: 1px solid #333;
-            animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-            transition: border 0.5s, box-shadow 0.5s, transform 0.2s;
+            text-align: center; border: 1px solid #333;
+            position: relative; z-index: 10;
         }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Boss Mode Shake Animation */
-        .shake-card {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        /* --- HEADER --- */
         .header {
             background: linear-gradient(135deg, var(--bb-green), #6a9e1b);
-            color: #fff;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: background 0.5s;
+            color: #fff; padding: 15px; font-weight: 800; text-transform: uppercase;
         }
-
         .content { padding: 20px; }
-
-        /* --- BUTTON GRID --- */
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .type-btn {
-            background-color: var(--btn-bg);
-            color: white;
-            border: 1px solid #444;
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
+            background-color: #333; color: white; border: 1px solid #444;
+            padding: 12px; border-radius: 6px; cursor: pointer;
+            font-weight: 600; text-transform: uppercase; transition: 0.2s;
         }
-
-        .type-btn:hover {
-            background-color: var(--bb-green);
-            border-color: var(--bb-green);
-            box-shadow: 0 0 10px var(--bb-green-glow);
-            transform: translateY(-2px);
-        }
-
-        .type-btn span {
-            display: block;
-            font-size: 9px;
-            opacity: 0.7;
-            font-weight: normal;
-            margin-top: 3px;
-            text-transform: none;
-        }
-
-        /* --- INPUT FIELD --- */
+        .type-btn:hover { background-color: var(--bb-green); border-color: var(--bb-green); }
+        .type-btn span { display: block; font-size: 9px; opacity: 0.7; font-weight: normal; }
+        
         input {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--input-bg);
-            border: 2px solid transparent;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            transition: 0.3s;
+            width: 100%; padding: 12px; background-color: var(--input-bg);
+            border: 2px solid transparent; border-radius: 8px;
+            color: white; font-size: 16px; text-align: center;
+            font-weight: bold; margin-bottom: 15px;
         }
-
-        input:focus {
-            outline: none;
-            border-color: var(--bb-green);
-            background-color: #333;
-        }
-
-        /* --- QR AREA --- */
-        #qrcode {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 140px;
-        }
-
-        #qrcode img {
-            border: 6px solid white;
-            border-radius: 8px;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.5); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* --- DOWNLOAD BUTTON --- */
+        input:focus { outline: none; border-color: var(--bb-green); }
+        
+        #qrcode { min-height: 140px; display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+        #qrcode img { border: 6px solid white; border-radius: 8px; }
+        
         button.download {
-            margin-top: 20px;
-            padding: 12px;
-            background-color: transparent;
-            color: var(--bb-green);
-            border: 2px solid var(--bb-green);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            display: none;
-            width: 100%;
+            margin-top: 20px; padding: 12px; width: 100%;
+            background: transparent; color: var(--bb-green);
+            border: 2px solid var(--bb-green); border-radius: 8px;
+            font-weight: bold; cursor: pointer; display: none;
             text-transform: uppercase;
-            transition: 0.2s;
         }
-
-        button.download:hover {
-            background-color: var(--bb-green);
-            color: white;
-            box-shadow: 0 5px 15px var(--bb-green-glow);
-        }
-
-        /* --- HISTORY LOG --- */
-        .history-container {
-            margin-top: 25px;
-            border-top: 1px solid #333;
-            padding-top: 15px;
-            text-align: left;
-            display: none;
-        }
+        button.download:hover { background: var(--bb-green); color: white; }
+        .credit { margin-top: 20px; font-size: 11px; color: #666; border-top: 1px solid #333; padding-top: 15px;}
         
-        .history-title {
-            font-size: 11px;
-            color: #888;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-        }
-
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .history-item {
-            background: #252525;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-family: monospace;
-            color: #ccc;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .history-item:hover {
-            background: #333;
-            color: white;
-            border-color: #555;
-        }
-
-        .history-item::after { content: '↺'; font-size: 14px; color: #666; }
-
-        /* --- FOOTER --- */
-        .credit {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #333;
-            font-size: 11px;
-            color: #666;
-            letter-spacing: 1px;
-        }
-        .credit span { color: var(--bb-green); font-weight: bold; }
-
-        /* --- BOSS MODE (ROYAL + FIRE) --- */
-        body.royal-mode {
-            background-color: #000; /* Darker black for fire contrast */
-        }
-        
-        body.royal-mode #fireCanvas {
-            opacity: 1;
-        }
-
-        body.royal-mode .header {
-            background: linear-gradient(135deg, var(--gold), #ff4500); /* Gold to Fire Orange */
-            color: #000;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
-        body.royal-mode .type-btn:hover {
-            background-color: var(--gold);
-            border-color: var(--fire-orange);
-            color: black;
-            box-shadow: 0 0 20px var(--gold-glow), 0 0 10px var(--fire-red);
-        }
-        body.royal-mode input:focus {
-            border-color: var(--fire-orange);
-            box-shadow: 0 0 15px rgba(255, 69, 0, 0.3);
-        }
-        body.royal-mode button.download {
-            color: var(--gold);
-            border-color: var(--gold);
-            background: rgba(0,0,0,0.5);
-        }
-        body.royal-mode button.download:hover {
-            background-color: var(--gold);
-            color: black;
-            box-shadow: 0 0 30px var(--fire-orange);
-        }
-        body.royal-mode .credit span { color: var(--gold); text-shadow: 0 0 5px var(--fire-red); }
-        body.royal-mode .card { 
-            border-color: var(--gold); 
-            box-shadow: 0 0 50px rgba(255, 69, 0, 0.3); 
-        }
-
+        /* BOSS MODE VISUALS (Still here for visual effect) */
+        body.boss-mode .header { background: linear-gradient(135deg, var(--gold), var(--fire-red)); color: black; }
+        body.boss-mode .card { border-color: var(--gold); box-shadow: 0 0 30px rgba(255, 69, 0, 0.4); }
     </style>
 </head>
 <body>
-
-    <canvas id="fireCanvas"></canvas>
-
-    <div class="emoji-bg" id="emojiBg">
-        <div class="floating-emoji" style="top: 10%; left: 10%;">🥦</div>
-        <div class="floating-emoji" style="top: 20%; right: 15%;">🥕</div>
-        <div class="floating-emoji" style="bottom: 15%; left: 20%;">🛒</div>
-        <div class="floating-emoji" style="bottom: 30%; right: 10%;">🍎</div>
-    </div>
-
-    <div class="card" id="mainCard">
-        <div class="header" id="headerTitle">⚡ QR Generator Pro</div>
-       
+    <div class="card">
+        <div class="header">⚡ QR Generator Pro</div>
         <div class="content">
-           
             <div class="btn-grid">
                 <button class="type-btn" onclick="generateRandom('BBNOW')">BB Now<span>(BB + 9 Digits)</span></button>
                 <button class="type-btn" onclick="generateRandom('MED')">Medium PBM<span>(PBM + 10 Digits)</span></button>
@@ -356,315 +92,68 @@
                 <button class="type-btn" onclick="generateRandom('DS')">DISPATCH<span>(Z-03-E-3)</span></button>
             </div>
 
-            <input type="text" id="textInput" placeholder="Type text to generate..." autocomplete="off">
-           
-            <div id="qrcode">
-                <span style="color:#555; font-size:12px; font-style:italic;">Select a type above to start</span>
-            </div>
-           
+            <input type="text" id="textInput" placeholder="Type text..." autocomplete="off">
+            <div id="qrcode"><span style="color:#555; font-size:12px;">Select a type above</span></div>
             <button id="dlBtn" class="download" onclick="downloadQR()">Download Image ⬇️</button>
-
-            <div id="historyContainer" class="history-container">
-                <div class="history-title">Recent Codes</div>
-                <div id="historyList" class="history-list"></div>
-            </div>
-
             <div class="credit">MADE BY <span>SK ALAUDDIN</span></div>
         </div>
     </div>
 
     <script>
-        // DOM Elements
+        const inputField = document.getElementById("textInput");
         const qrcodeContainer = document.getElementById("qrcode");
         const dlBtn = document.getElementById("dlBtn");
-        const inputField = document.getElementById("textInput");
-        const historyListEl = document.getElementById("historyList");
-        const historyContainer = document.getElementById("historyContainer");
-        const emojiBg = document.getElementById("emojiBg");
-        const mainCard = document.getElementById("mainCard");
-        const headerTitle = document.getElementById("headerTitle");
-        
-        // --- AUDIO SYSTEM (Web Audio API) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        function playTone(freq, type, duration, vol) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        // Standard Sounds
-        function playGenSound() { playTone(600, 'sine', 0.1, 0.1); } 
-        function playDownloadSound() { playTone(1200, 'sine', 0.2, 0.1); }
-
-        // BOSS MODE SOUND (Cinematic Drone)
-        function playBossSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const t = audioCtx.currentTime;
-            
-            // Oscillator 1: Low Deep Drone
-            const osc1 = audioCtx.createOscillator();
-            const gain1 = audioCtx.createGain();
-            osc1.type = 'sawtooth';
-            osc1.frequency.setValueAtTime(60, t);
-            osc1.frequency.exponentialRampToValueAtTime(30, t + 2); // Drop pitch
-            gain1.gain.setValueAtTime(0.3, t);
-            gain1.gain.linearRampToValueAtTime(0, t + 3);
-            
-            // Oscillator 2: Mid grit
-            const osc2 = audioCtx.createOscillator();
-            const gain2 = audioCtx.createGain();
-            osc2.type = 'square';
-            osc2.frequency.setValueAtTime(120, t);
-            osc2.frequency.linearRampToValueAtTime(80, t + 1);
-            gain2.gain.setValueAtTime(0.1, t);
-            gain2.gain.linearRampToValueAtTime(0, t + 2);
-
-            // Connect
-            osc1.connect(gain1).connect(audioCtx.destination);
-            osc2.connect(gain2).connect(audioCtx.destination);
-            
-            osc1.start(); osc2.start();
-            osc1.stop(t + 3); osc2.stop(t + 3);
-        }
-
-        // --- HISTORY LOGIC ---
-        var historyData = [];
-        function addToHistory(code) {
-            if (!code) return;
-            if (historyData.length > 0 && historyData[0] === code) return;
-            historyData.unshift(code);
-            if (historyData.length > 5) historyData.pop();
-            renderHistory();
-        }
-        function renderHistory() {
-            if (historyData.length > 0) historyContainer.style.display = "block";
-            historyListEl.innerHTML = "";
-            historyData.forEach(code => {
-                let div = document.createElement("div");
-                div.className = "history-item";
-                div.innerText = code;
-                div.onclick = function() { inputField.value = code; makeQR(code, false); };
-                historyListEl.appendChild(div);
-            });
-        }
-
-        // --- GENERATOR LOGIC ---
-        function getRandomDigits(length) {
-            let result = '';
-            const characters = '0123456789';
-            for (let i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
-            return result;
-        }
-
-        function generateRandom(type) {
-            let finalCode = "";
-            if (type === 'BBNOW') finalCode = "BB" + getRandomDigits(9);
-            else if (type === 'MED') finalCode = "PBM-" + getRandomDigits(10);
-            else if (type === 'HED') finalCode = "PBHM-" + getRandomDigits(10);
-            else if (type === 'LARGE') finalCode = "PBL-" + getRandomDigits(10);
-            else if (type === 'SMALL') finalCode = "PBS-" + getRandomDigits(10);
-            else if (type === 'SLOT') finalCode = "BN" + getRandomDigits(2) + "-PO01";
-            else if (type === 'Gel') finalCode = "PCM-BLU-SM-C" + getRandomDigits(4);
-            else if (type === 'IN') finalCode = "GP" + getRandomDigits(2) + "-IN-IBG-E" + getRandomDigits(4);
-            else if (type === 'BL') finalCode = "GP" + getRandomDigits(2) + "-KL-BC-A" + getRandomDigits(4);
-            else if (type === 'DS') finalCode = "Z-03-E-3";
-
-            inputField.value = finalCode;
-            makeQR(finalCode, true);
-        }
-
-        function makeQR(text, saveToHistory) {
-            checkEasterEgg(text);
-            qrcodeContainer.innerHTML = "";
-            if(text) {
-                new QRCode(qrcodeContainer, {
-                    text: text,
-                    width: 128,
-                    height: 128,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-                dlBtn.style.display = "block";
-                
-                // Don't play default beep if boss mode just activated
-                if(!text.toLowerCase().includes("boss") && !text.toLowerCase().includes("alauddin")) {
-                   playGenSound(); 
-                }
-
-                if(saveToHistory) addToHistory(text);
-            }
-        }
-
-        // --- VOLCANO FIRE PARTICLE SYSTEM ---
-        const canvas = document.getElementById("fireCanvas");
-        const ctx = canvas.getContext("2d");
-        let particles = [];
-        let animationId;
-        let isFireActive = false;
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        class Particle {
-            constructor() {
-                // Random position across the width
-                this.x = Math.random() * canvas.width;
-                // Start ABOVE the screen (falling down)
-                this.y = -20; 
-                // Random drift left or right
-                this.vx = (Math.random() - 0.5) * 3; 
-                // Fast falling speed (gravity)
-                this.vy = Math.random() * 4 + 3; 
-                
-                this.size = Math.random() * 8 + 4;
-                // Fire colors
-                this.color = `hsl(${Math.random() * 40 + 10}, 100%, 50%)`; 
-                this.life = 150;
-            }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.life -= 1; // Fade out
-                this.size *= 0.98; // Shrink slowly
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = this.life / 100;
-                ctx.fill();
-            }
-        }
-
-        function initFire() {
-            if(isFireActive) return;
-            isFireActive = true;
-            animateFire();
-        }
-
-        function animateFire() {
-            if(!isFireActive) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'lighter'; // Glowing effect
-
-            // Add new particles constantly (raining fire)
-            if (particles.length < 400) {
-                for(let i=0; i<8; i++) particles.push(new Particle());
-            }
-
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-                // Remove if dead OR off bottom of screen
-                if (particles[i].life <= 0 || particles[i].y > canvas.height + 20) {
-                    particles.splice(i, 1);
-                    i--;
-                }
-            }
-            requestAnimationFrame(animateFire);
-        }
-
-        // --- EASTER EGG (BOSS MODE) ---
-        function checkEasterEgg(val) {
-            const lower = val.toLowerCase();
-            const body = document.body;
-            
-            if (lower.includes("alauddin") || lower.includes("boss")) {
-                if (!body.classList.contains("royal-mode")) {
-                    body.classList.add("royal-mode");
-                    mainCard.classList.add("shake-card"); // Trigger Shake
-                    
-                    // Removed "KING ALAUDDIN" text replacement
-                    // headerTitle.innerText = "🔥 KING ALAUDDIN 🔥"; <--- DELETED
-                    
-                    // Activate Emojis
-                    emojiBg.innerHTML = `
-                        <div class="floating-emoji" style="top: 10%; left: 10%;">🔥</div>
-                        <div class="floating-emoji" style="top: 20%; right: 15%;">👑</div>
-                        <div class="floating-emoji" style="bottom: 15%; left: 20%;">⚡</div>
-                        <div class="floating-emoji" style="bottom: 30%; right: 10%;">💎</div>
-                    `;
-
-                    // Start Fire & Sound
-                    initFire();
-                    playBossSound();
-
-                    setTimeout(() => mainCard.classList.remove("shake-card"), 1000);
-                }
-            }
-        }
-
-        // --- INPUT HANDLING ---
-        function formatSmartInput(val) {
-            let clean = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-            if(clean.length < 2) return clean;
-            
-            let part1 = clean.substring(0, 1);
-            let part2 = clean.substring(1, 3);
-            let part3 = clean.substring(3, 4);
-            let part4 = clean.substring(4);
-            
-            let formatted = part1;
-            if (part2) formatted += "-" + part2;
-            if (part3) formatted += "-" + part3;
-            if (part4) formatted += "-" + part4;
-            return formatted;
-        }
-
+        // --- INPUT LISTENER (THE REDIRECT LOGIC) ---
         inputField.addEventListener("input", function() {
-            let currentVal = inputField.value;
-            let raw = currentVal.replace(/-/g, '');
+            const val = inputField.value;
             
-            // Smart formatting logic
-            if (raw.length >= 2) {
-                let firstChar = raw.charAt(0);
-                let secondChar = raw.charAt(1);
-                if (isNaN(firstChar) && !isNaN(secondChar)) {
-                    let formatted = formatSmartInput(raw);
-                    if (inputField.value !== formatted) inputField.value = formatted;
-                }
+            // 1. AUTO REDIRECT TO GAME
+            if (val.toLowerCase() === "manager") {
+                window.location.href = "game.html"; // <--- REDIRECTS HERE
+                return;
             }
-            
-            if (inputField.value.trim() !== "") {
-                makeQR(inputField.value, false); 
+
+            // 2. Boss Mode Visuals (Optional)
+            if (val.toLowerCase().includes("alauddin") || val.toLowerCase().includes("boss")) {
+                document.body.classList.add("boss-mode");
+            }
+
+            // 3. Normal QR Generation
+            if (val.trim() !== "") {
+                qrcodeContainer.innerHTML = "";
+                new QRCode(qrcodeContainer, { text: val, width: 128, height: 128 });
+                dlBtn.style.display = "block";
             } else {
-                qrcodeContainer.innerHTML = '<span style="color:#555; font-size:12px; font-style:italic;">Select a type above to start</span>';
+                qrcodeContainer.innerHTML = '<span style="color:#555; font-size:12px;">Select a type above</span>';
                 dlBtn.style.display = "none";
             }
         });
 
-        inputField.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                makeQR(inputField.value, true);
-            }
-        });
+        // --- Helper Functions ---
+        function generateRandom(type) {
+            let r = l => Array(l).fill(0).map(()=>Math.floor(Math.random()*10)).join('');
+            let c = "";
+            if (type === 'BBNOW') c = "BB" + r(9);
+            else if (type === 'MED') c = "PBM-" + r(10);
+            else if (type === 'HED') c = "PBHM-" + r(10);
+            else if (type === 'LARGE') c = "PBL-" + r(10);
+            else if (type === 'SMALL') c = "PBS-" + r(10);
+            else if (type === 'SLOT') c = "BN" + r(2) + "-PO01";
+            else if (type === 'Gel') c = "PCM-BLU-SM-C" + r(4);
+            else if (type === 'IN') c = "GP" + r(2) + "-IN-IBG-E" + r(4);
+            else if (type === 'BL') c = "GP" + r(2) + "-KL-BC-A" + r(4);
+            else if (type === 'DS') c = "Z-03-E-3";
+            inputField.value = c;
+            inputField.dispatchEvent(new Event('input'));
+        }
 
         function downloadQR() {
             const img = document.querySelector("#qrcode img");
-            if (img) {
-                playDownloadSound();
+            if(img) {
                 const link = document.createElement("a");
-                const fileName = inputField.value.replace(/[^a-z0-9]/gi, '_').substring(0, 20);
                 link.href = img.src;
-                link.download = fileName + ".png";
+                link.download = "QR_Code.png";
                 link.click();
             }
         }
