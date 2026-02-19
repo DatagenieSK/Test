@@ -346,3 +346,107 @@ function checkEasterEgg(val) {
         }
     }
 }
+// --- OCR TEXT SCANNER LOGIC ---
+const videoElement = document.getElementById('cameraFeed');
+const canvasElement = document.getElementById('captureCanvas');
+const ocrStatus = document.getElementById('ocrStatus');
+const ocrContainer = document.getElementById('ocr-container');
+let mediaStream = null;
+
+async function startTextScanner() {
+    ocrContainer.style.display = 'block';
+    scanBtn.style.display = 'none';
+    ocrStatus.innerText = "Aim at the product name...";
+
+    try {
+        // Request the back camera
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" } 
+        });
+        videoElement.srcObject = mediaStream;
+    } catch (err) {
+        console.error("Camera error:", err);
+        ocrStatus.innerText = "Camera access denied. Are you on https/localhost?";
+        ocrStatus.style.color = "red";
+    }
+}
+
+function stopTextScanner() {
+    if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+    }
+    ocrContainer.style.display = 'none';
+    scanBtn.style.display = 'block';
+    ocrStatus.innerText = "";
+}
+
+async function captureAndRead() {
+    if (!mediaStream) return;
+
+    // 1. Give user feedback
+    ocrStatus.innerText = "⏳ Reading text... please wait.";
+    ocrStatus.style.color = "var(--gold)";
+    playGenSound(); // A little beep to confirm picture taken
+
+    // 2. Draw current video frame to hidden canvas
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
+    const ctx = canvasElement.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+    // 3. Pass image to Tesseract
+    try {
+        const result = await Tesseract.recognize(
+            canvasElement,
+            'eng', // English language
+            { logger: m => console.log(m) } // Optional: logs progress to console
+        );
+
+        let scannedText = result.data.text.trim();
+        
+        if (scannedText) {
+            // Clean up the text (remove excessive newlines/weird characters)
+            scannedText = scannedText.replace(/\n/g, ' ').replace(/[^a-zA-Z0-9 -]/g, '');
+            
+            ocrStatus.innerText = "✅ Found: " + scannedText.substring(0, 20) + "...";
+            ocrStatus.style.color = "var(--bb-green)";
+            
+            // Route the text depending on which tab is open
+            const isGeneratorActive = document.getElementById('generatorTab').classList.contains('active');
+            
+            if (isGeneratorActive) {
+                inputField.value = scannedText;
+                // Don't auto-generate QR if the text is huge/messy, let them edit it first
+            } else {
+                // If in CSV Search tab, switch to it, auto-fill, and trigger search
+                switchTab('search', document.querySelectorAll('.tab-btn')[1]);
+                searchInput.disabled = false;
+                searchInput.value = scannedText;
+                searchInput.dispatchEvent(new Event('input')); 
+            }
+            
+            // Turn off camera after a short delay
+            setTimeout(() => {
+                stopTextScanner();
+            }, 1500);
+
+        } else {
+            ocrStatus.innerText = "❌ No text found. Try again closer/clearer.";
+            ocrStatus.style.color = "#ff4500";
+        }
+
+    } catch (err) {
+        console.error("OCR Error:", err);
+        ocrStatus.innerText = "❌ OCR Failed.";
+        ocrStatus.style.color = "#ff4500";
+    }
+}
+
+// Make sure camera turns off if they switch tabs while it's open
+const originalSwitchTab = switchTab;
+switchTab = function(tabId, btnElement) {
+    stopTextScanner(); 
+    originalSwitchTab(tabId, btnElement);
+}
+
