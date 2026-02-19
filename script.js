@@ -12,6 +12,7 @@ const csvFileInput = document.getElementById('csvFileInput');
 const uploadStatus = document.getElementById('uploadStatus');
 const searchInput = document.getElementById('searchInput');
 const searchResults = document.getElementById('searchResults');
+const scanBtn = document.getElementById('scanBtn');
 
 let productData = []; 
 let currentQRText = "";
@@ -24,6 +25,9 @@ function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(tabId + 'Tab').classList.add('active');
     
+    // Stop scanner if it's running when switching tabs
+    stopScanner();
+
     // Reset visuals
     qrcodeContainer.innerHTML = '';
     dlBtn.style.display = 'none';
@@ -68,12 +72,61 @@ function playBossSound() {
     osc1.start(); osc2.start(); osc1.stop(t + 3); osc2.stop(t + 3);
 }
 
+// --- SCANNER LOGIC ---
+let html5QrCode;
+
+function startScanner() {
+    document.getElementById('scanner-container').style.display = 'block';
+    scanBtn.style.display = 'none'; // Hide the open button
+
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    
+    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+    .catch(err => {
+        console.error("Camera error:", err);
+        alert("Camera access denied or unavailable.");
+        stopScanner();
+    });
+}
+
+function stopScanner() {
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('scanner-container').style.display = 'none';
+            scanBtn.style.display = 'block'; // Show the open button again
+        }).catch(err => console.error("Failed to stop scanner", err));
+    } else {
+        document.getElementById('scanner-container').style.display = 'none';
+        scanBtn.style.display = 'block';
+    }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    playGenSound(); // Play success beep
+    stopScanner(); // Close camera instantly
+    
+    // Check which tab is currently active to decide where the text goes
+    const isGeneratorActive = document.getElementById('generatorTab').classList.contains('active');
+    
+    if (isGeneratorActive) {
+        inputField.value = decodedText;
+        makeQR(decodedText, true); // Generate instantly
+    } else {
+        searchInput.disabled = false;
+        searchInput.value = decodedText;
+        searchInput.dispatchEvent(new Event('input')); // Trigger search manually
+    }
+}
+
 // --- CSV PARSING (USING PAPAPARSE) ---
 csvFileInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // PapaParse handles commas inside quotes cleanly
     Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -112,12 +165,11 @@ searchInput.addEventListener('input', function() {
         String(item.sku).toLowerCase().includes(query)
     );
 
-    const topMatches = matches.slice(0, 15); // Limit results to prevent lag
+    const topMatches = matches.slice(0, 15);
 
     topMatches.forEach(match => {
         let div = document.createElement('div');
         div.className = 'history-item';
-        // Put Name on left, SKU faded on right
         div.innerHTML = `<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 75%;">${match.name}</span> <span style="color:#888; font-size: 11px;">${match.sku}</span>`;
         
         div.onclick = function() {
@@ -293,4 +345,4 @@ function checkEasterEgg(val) {
             setTimeout(() => mainCard.classList.remove("shake-card"), 1000);
         }
     }
-                   }
+}
