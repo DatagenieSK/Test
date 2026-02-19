@@ -5,158 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BB QR Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        /* --- VARIABLES --- */
-        :root {
-            --bb-green: #84c225;
-            --bg-dark: #121212;
-            --card-dark: #1e1e1e;
-            --text-light: #e0e0e0;
-            --input-bg: #2c2c2c;
-            --gold: #ffd700;
-            --fire-red: #ff4500;
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; padding: 20px;
-            overflow: hidden;
-        }
-
-        /* --- CARD STYLES --- */
-        .card {
-            background: var(--card-dark);
-            width: 100%; max-width: 400px;
-            border-radius: 16px; overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            text-align: center; border: 1px solid #333;
-            position: relative; z-index: 10;
-        }
-        .header {
-            background: linear-gradient(135deg, var(--bb-green), #6a9e1b);
-            color: #fff; padding: 15px; font-weight: 800; text-transform: uppercase;
-        }
-        .content { padding: 20px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .type-btn {
-            background-color: #333; color: white; border: 1px solid #444;
-            padding: 12px; border-radius: 6px; cursor: pointer;
-            font-weight: 600; text-transform: uppercase; transition: 0.2s;
-        }
-        .type-btn:hover { background-color: var(--bb-green); border-color: var(--bb-green); }
-        .type-btn span { display: block; font-size: 9px; opacity: 0.7; font-weight: normal; }
-        
-        input {
-            width: 100%; padding: 12px; background-color: var(--input-bg);
-            border: 2px solid transparent; border-radius: 8px;
-            color: white; font-size: 16px; text-align: center;
-            font-weight: bold; margin-bottom: 15px;
-        }
-        input:focus { outline: none; border-color: var(--bb-green); }
-        
-        #qrcode { min-height: 140px; display: flex; justify-content: center; align-items: center; margin-top: 10px; }
-        #qrcode img { border: 6px solid white; border-radius: 8px; }
-        
-        button.download {
-            margin-top: 20px; padding: 12px; width: 100%;
-            background: transparent; color: var(--bb-green);
-            border: 2px solid var(--bb-green); border-radius: 8px;
-            font-weight: bold; cursor: pointer; display: none;
-            text-transform: uppercase;
-        }
-        button.download:hover { background: var(--bb-green); color: white; }
-        .credit { margin-top: 20px; font-size: 11px; color: #666; border-top: 1px solid #333; padding-top: 15px;}
-        
-        /* BOSS MODE VISUALS (Still here for visual effect) */
-        body.boss-mode .header { background: linear-gradient(135deg, var(--gold), var(--fire-red)); color: black; }
-        body.boss-mode .card { border-color: var(--gold); box-shadow: 0 0 30px rgba(255, 69, 0, 0.4); }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="card">
-        <div class="header">⚡ QR Generator Pro</div>
+
+    <canvas id="fireCanvas"></canvas>
+
+    <div class="emoji-bg" id="emojiBg">
+        <div class="floating-emoji" style="top: 10%; left: 10%;">🥦</div>
+        <div class="floating-emoji" style="top: 20%; right: 15%;">🥕</div>
+        <div class="floating-emoji" style="bottom: 15%; left: 20%;">📦</div>
+        <div class="floating-emoji" style="bottom: 30%; right: 10%;">🔍</div>
+    </div>
+
+    <div class="card" id="mainCard">
+        <div class="header" id="headerTitle">⚡ QR Generator Pro</div>
+       
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('generator', this)">QR Generator</button>
+            <button class="tab-btn" onclick="switchTab('search', this)">CSV Bulk Search</button>
+        </div>
+
         <div class="content">
-            <div class="btn-grid">
-                <button class="type-btn" onclick="generateRandom('BBNOW')">BB Now<span>(BB + 9 Digits)</span></button>
-                <button class="type-btn" onclick="generateRandom('MED')">Medium PBM<span>(PBM + 10 Digits)</span></button>
-                <button class="type-btn" onclick="generateRandom('HED')">HED<span>(PBHM + 10 Digits)</span></button>
-                <button class="type-btn" onclick="generateRandom('SMALL')">Small<span>(PBS + 10 Digits)</span></button>
-                <button class="type-btn" onclick="generateRandom('LARGE')">Large<span>(PBL + 10 Digits)</span></button>
-                <button class="type-btn" onclick="generateRandom('SLOT')">Slot QR<span>(BNxx-POxx)</span></button>
-                <button class="type-btn" onclick="generateRandom('Gel')">Gel Pad<span>(PCM-BLU...)</span></button>
-                <button class="type-btn" onclick="generateRandom('IN')">Insulated<span>(GP-IN...)</span></button>
-                <button class="type-btn" onclick="generateRandom('BL')">Bulk<span>(GP-KL...)</span></button>
-                <button class="type-btn" onclick="generateRandom('DS')">DISPATCH<span>(Z-03-E-3)</span></button>
+            
+            <div id="generatorTab" class="tab-content active">
+                <div class="btn-grid">
+                    <button class="type-btn" onclick="generateRandom('BBNOW')">BB Now<span>(BB + 9 Digits)</span></button>
+                    <button class="type-btn" onclick="generateRandom('MED')">Medium PBM<span>(PBM + 10 Digits)</span></button>
+                    <button class="type-btn" onclick="generateRandom('HED')">HED<span>(PBHM + 10 Digits)</span></button>
+                    <button class="type-btn" onclick="generateRandom('SMALL')">Small<span>(PBS + 10 Digits)</span></button>
+                    <button class="type-btn" onclick="generateRandom('LARGE')">Large<span>(PBL + 10 Digits)</span></button>
+                    <button class="type-btn" onclick="generateRandom('SLOT')">Slot QR<span>(BNxx-POxx)</span></button>
+                    <button class="type-btn" onclick="generateRandom('Gel')">Gel Pad<span>(PCM-BLU...)</span></button>
+                    <button class="type-btn" onclick="generateRandom('IN')">Insulated<span>(GP-IN...)</span></button>
+                    <button class="type-btn" onclick="generateRandom('BL')">Bulk<span>(GP-KL...)</span></button>
+                    <button class="type-btn" onclick="generateRandom('DS')">DISPATCH<span>(Z-03-E-3)</span></button>
+                </div>
+                <input type="text" id="textInput" placeholder="Type text to generate..." autocomplete="off">
             </div>
 
-            <input type="text" id="textInput" placeholder="Type text..." autocomplete="off">
-            <div id="qrcode"><span style="color:#555; font-size:12px;">Select a type above</span></div>
+            <div id="searchTab" class="tab-content">
+                <label class="file-upload-label">
+                    <input type="file" id="csvFileInput" accept=".csv">
+                    📁 Upload Stock CSV
+                </label>
+                <div id="uploadStatus">CSV Loaded Successfully!</div>
+                
+                <input type="text" id="searchInput" placeholder="Search Sku_name or SkuID..." autocomplete="off" disabled>
+                <div id="searchResults" class="history-list"></div>
+            </div>
+           
+            <div id="qrcode">
+                <span id="qrPlaceholder" style="color:#555; font-size:12px; font-style:italic;">Select a type above to start</span>
+            </div>
+           
             <button id="dlBtn" class="download" onclick="downloadQR()">Download Image ⬇️</button>
+
+            <div id="historyContainer" class="history-container">
+                <div class="history-title">Recent Codes</div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+
             <div class="credit">MADE BY <span>SK ALAUDDIN</span></div>
         </div>
     </div>
 
-    <script>
-        const inputField = document.getElementById("textInput");
-        const qrcodeContainer = document.getElementById("qrcode");
-        const dlBtn = document.getElementById("dlBtn");
-
-        // --- INPUT LISTENER (THE REDIRECT LOGIC) ---
-        inputField.addEventListener("input", function() {
-            const val = inputField.value;
-            
-            // 1. AUTO REDIRECT TO GAME
-            if (val.toLowerCase() === "manager") {
-                window.location.href = "game.html"; // <--- REDIRECTS HERE
-                return;
-            }
-
-            // 2. Boss Mode Visuals (Optional)
-            if (val.toLowerCase().includes("alauddin") || val.toLowerCase().includes("boss")) {
-                document.body.classList.add("boss-mode");
-            }
-
-            // 3. Normal QR Generation
-            if (val.trim() !== "") {
-                qrcodeContainer.innerHTML = "";
-                new QRCode(qrcodeContainer, { text: val, width: 128, height: 128 });
-                dlBtn.style.display = "block";
-            } else {
-                qrcodeContainer.innerHTML = '<span style="color:#555; font-size:12px;">Select a type above</span>';
-                dlBtn.style.display = "none";
-            }
-        });
-
-        // --- Helper Functions ---
-        function generateRandom(type) {
-            let r = l => Array(l).fill(0).map(()=>Math.floor(Math.random()*10)).join('');
-            let c = "";
-            if (type === 'BBNOW') c = "BB" + r(9);
-            else if (type === 'MED') c = "PBM-" + r(10);
-            else if (type === 'HED') c = "PBHM-" + r(10);
-            else if (type === 'LARGE') c = "PBL-" + r(10);
-            else if (type === 'SMALL') c = "PBS-" + r(10);
-            else if (type === 'SLOT') c = "BN" + r(2) + "-PO01";
-            else if (type === 'Gel') c = "PCM-BLU-SM-C" + r(4);
-            else if (type === 'IN') c = "GP" + r(2) + "-IN-IBG-E" + r(4);
-            else if (type === 'BL') c = "GP" + r(2) + "-KL-BC-A" + r(4);
-            else if (type === 'DS') c = "Z-03-E-3";
-            inputField.value = c;
-            inputField.dispatchEvent(new Event('input'));
-        }
-
-        function downloadQR() {
-            const img = document.querySelector("#qrcode img");
-            if(img) {
-                const link = document.createElement("a");
-                link.href = img.src;
-                link.download = "QR_Code.png";
-                link.click();
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
