@@ -6,6 +6,7 @@
     <title>BB QR Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,10 +25,19 @@
        
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('generator', this)">QR Generator</button>
-            <button class="tab-btn" onclick="switchTab('search', this)">CSV Bulk Search</button>
+            <button class="tab-btn" onclick="switchTab('search', this)">CSV Search</button>
         </div>
 
         <div class="content">
+            
+            <button class="type-btn" id="scanBtn" style="width: 100%; margin-bottom: 15px; background-color: #0056b3; border-color: #004494;" onclick="startScanner()">
+                📷 Scan Barcode / QR
+            </button>
+
+            <div id="scanner-container">
+                <div id="reader"></div>
+                <button class="type-btn" style="width: 100%; margin-top: 10px; background-color: #ff4500; border-color: #cc3700;" onclick="stopScanner()">Stop Scanner ❌</button>
+            </div>
             
             <div id="generatorTab" class="tab-content active">
                 <div class="btn-grid">
