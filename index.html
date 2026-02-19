@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BB QR Pro</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,13 +30,19 @@
 
         <div class="content">
             
-            <button class="type-btn" id="scanBtn" style="width: 100%; margin-bottom: 15px; background-color: #0056b3; border-color: #004494;" onclick="startScanner()">
-                📷 Scan Barcode / QR
+            <button class="type-btn" id="scanBtn" style="width: 100%; margin-bottom: 15px; background-color: #0056b3; border-color: #004494;" onclick="startTextScanner()">
+                📷 Scan Product Name (OCR)
             </button>
 
-            <div id="scanner-container">
-                <div id="reader"></div>
-                <button class="type-btn" style="width: 100%; margin-top: 10px; background-color: #ff4500; border-color: #cc3700;" onclick="stopScanner()">Stop Scanner ❌</button>
+            <div id="ocr-container" style="display: none; margin-bottom: 15px; background: #111; padding: 10px; border-radius: 8px; border: 2px solid var(--bb-green);">
+                <video id="cameraFeed" autoplay playsinline style="width: 100%; border-radius: 8px; object-fit: cover;"></video>
+                <div id="ocrStatus" style="color: var(--gold); font-size: 12px; margin-top: 5px; font-weight: bold;"></div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="type-btn" style="flex: 1; background-color: var(--bb-green); border-color: #6a9e1b;" onclick="captureAndRead()">📸 Snap & Read</button>
+                    <button class="type-btn" style="flex: 1; background-color: #ff4500; border-color: #cc3700;" onclick="stopTextScanner()">❌ Close</button>
+                </div>
+                <canvas id="captureCanvas" style="display:none;"></canvas>
             </div>
             
             <div id="generatorTab" class="tab-content active">
@@ -85,4 +90,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
