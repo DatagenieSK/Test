@@ -379,3 +379,27 @@ body.royal-mode .card {
     border-color: var(--gold); 
     box-shadow: 0 0 50px rgba(255, 69, 0, 0.3); 
               }
+/* --- SCANNER SPECIFIC STYLES --- */
+#scanner-container {
+    display: none;
+    margin-bottom: 15px;
+    background: #111;
+    border-radius: 8px;
+    padding: 10px;
+    border: 2px solid var(--bb-green);
+    animation: fadeIn 0.3s ease;
+}
+
+#reader {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#reader video {
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+/* Hide default html5-qrcode links to keep UI clean */
+#reader a { display: none !important; }
