@@ -27,6 +27,7 @@ function switchTab(tabId, btnElement) {
     
     // Stop scanner if it's running when switching tabs
     stopScanner();
+    stopTextScanner(); // Ensure OCR camera is also stopped
 
     // Reset visuals
     qrcodeContainer.innerHTML = '';
@@ -247,7 +248,7 @@ function makeQR(text, saveToHistory) {
         });
         dlBtn.style.display = "block";
         
-        if(!text.toLowerCase().includes("boss") && !text.toLowerCase().includes("alauddin")) {
+        if(!text.toLowerCase().includes("boss") && !text.toLowerCase().includes("alauddin") && text.toLowerCase().trim() !== "manager") {
            playGenSound(); 
         }
 
@@ -331,7 +332,16 @@ function animateFire() {
 }
 
 function checkEasterEgg(val) {
-    if (val.toLowerCase().includes("alauddin") || val.toLowerCase().includes("boss")) {
+    const text = val.toLowerCase().trim();
+
+    // --- NEW: Manager Mode Redirect ---
+    if (text === "manager") {
+        window.location.href = "game.html"; 
+        return; 
+    }
+
+    // --- EXISTING: Boss/Royal Mode ---
+    if (text.includes("alauddin") || text.includes("boss")) {
         if (!document.body.classList.contains("royal-mode")) {
             document.body.classList.add("royal-mode");
             mainCard.classList.add("shake-card");
@@ -346,6 +356,7 @@ function checkEasterEgg(val) {
         }
     }
 }
+
 // --- OCR TEXT SCANNER LOGIC ---
 const videoElement = document.getElementById('cameraFeed');
 const canvasElement = document.getElementById('captureCanvas');
@@ -392,8 +403,8 @@ async function captureAndRead() {
     // 2. Draw current video frame to hidden canvas
     canvasElement.width = videoElement.videoWidth;
     canvasElement.height = videoElement.videoHeight;
-    const ctx = canvasElement.getContext('2d');
-    ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+    const canvasCtx = canvasElement.getContext('2d');
+    canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
 
     // 3. Pass image to Tesseract
     try {
@@ -420,7 +431,7 @@ async function captureAndRead() {
                 // Don't auto-generate QR if the text is huge/messy, let them edit it first
             } else {
                 // If in CSV Search tab, switch to it, auto-fill, and trigger search
-                switchTab('search', document.querySelectorAll('.tab-btn')[1]);
+                document.querySelectorAll('.tab-btn')[1].click(); // Simulate tab click safely
                 searchInput.disabled = false;
                 searchInput.value = scannedText;
                 searchInput.dispatchEvent(new Event('input')); 
@@ -442,11 +453,3 @@ async function captureAndRead() {
         ocrStatus.style.color = "#ff4500";
     }
 }
-
-// Make sure camera turns off if they switch tabs while it's open
-const originalSwitchTab = switchTab;
-switchTab = function(tabId, btnElement) {
-    stopTextScanner(); 
-    originalSwitchTab(tabId, btnElement);
-}
-
